@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-10-16T02:21:30.865Z",
+  "configVersion": 1,
+  "projects": [
+    {
+      "slug": "example-project",
+      "name": "Example Project",
+      "tier": 1,
+      "metrics": {
+        "disciplineScore": null,
+        "reworkRatio": null,
+        "timeToShipDays": null,
+        "tokens": null,
+        "expertHitRate": null
+      },
+      "context": {
+        "complexity": "M",
+        "modelMix": {
+          "sonnet": 80,
+          "opus": 20
+        },
+        "duration": "ongoing",
+        "tier": 1,
+        "tokenSource": "empty-session-log"
+      },
+      "details": {
+        "disciplineCriteria": null,
+        "commitCounts": null,
+        "sessionCount": null,
+        "tokensByModel": null,
+        "specsCounted": null,
+        "devlogExpertStats": null,
+        "startDate": "2026-01-01",
+        "shipDate": null
+      },
+      "notes": "Replace this project with your own entries. See the OSS README + hrekov.dev/tools for the methodology aside."
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+# {{PROJECT_NAME}} — CLAUDE.md
+
+**Read this file, then `DEVLOG.md`, then (if present) `STABLE_LOGIC.md`
+before any change.**
+
+---
+
+## Project
+
+{{ONE_LINE_DESCRIPTION}}
+
+## Architecture
+
+- **Stack**: {{STACK}}
+- **Backend**: {{BACKEND}}
+- **Key libraries**: {{LIBRARIES}}
+
+## Key directories
+
+```
+{{DIRECTORY_TREE}}
+```
+
+## Env vars
+
+```
+{{ENV_VARS}}
+```
+
+---
+
+## ShipLoop Protocol (applied to every session)
+
+This project runs under ShipLoop v2.0. Every incoming message is silently
+classified before responding:
+
+| Class | Trigger                                                | Action                                        | Model      |
+|-------|--------------------------------------------------------|-----------------------------------------------|------------|
+| **Q** Quick question | "what", "explain", "how does", "why"    | Answer directly                               | haiku      |
+| **B** Bug            | "error", "crash", "doesn't work", "fix" | Diagnose → fix → verify → DEVLOG              | sonnet     |
+| **S** Small feature  | < 3 files, < 1h                         | Verify spec exists → implement → DEVLOG       | sonnet     |
+| **L** Large feature  | new screen/service, > 3 files           | Suggest Opus → full spec/plan/tasks cycle     | **opus**   |
+| **R** Refactor       | "refactor", "clean", "extract"          | Analyze → propose → implement                 | sonnet     |
+| **T** Testing/QA     | "test", "QA", "UX", "analyze"           | `/shiploop-tester`                            | sonnet     |
+| **D** Discovery      | "brainstorm", "design", "ideas"         | Suggest Opus → `/shiploop-brainstorm`         | **opus**   |
+| **M** Memory         | "what did we", "status", "where are we" | Read `memory/` → answer                       | haiku      |
+| **O** Observer       | "optimize agents", "improve workflow"   | `/shiploop-observer`                          | sonnet     |
+| **E** Expert         | "review", "second opinion", "root cause"| `/shiploop-expert phase=<pre-ship\|in-progress\|blind-bug>` | sonnet (via `expert` subagent) |
+
+**Rule for L and D**: state the plan + suggest `/fast` (Opus) before
+starting.
+
+### Lifecycle
+
+```
+Discovery → Spec → Plan → Tasks → Build → QA → Ship → Retro → (loop)
+```
+
+Nothing gets built without passing through `/shiploop-start` or an
+explicit `spec.md + plan.md + tasks.md` triple in `specs/<N>-<slug>/`.
+
+### Team protocol
+
+- Feature request → **spec first, never code immediately**.
+- Bug → diagnose root cause → fix → verify → append to `DEVLOG.md`.
+- Question → direct answer.
+- After every implementation → update `DEVLOG.md`.
+- After every QA run → create `memory/qa-iteration-N.md`.
+- After every release → run `/shiploop-brainstorm stage=retrospective`.
+
+### Memory checkpoints
+
+Save a `memory/` file at each phase boundary:
+
+- Phase 0 complete → `memory/project-discovery.md`
+- Build iteration → `memory/iteration-N.md`
+- QA cycle → `memory/qa-iteration-N.md`
+- Release → `memory/release-N.md`
+
+### Skills available in `.claude/skills/`
+
+- `/shiploop-start` — single entry point, routes to phase
+- `/shiploop-router` — classify any request
+- `/shiploop-brainstorm stage=<discovery|post-spec|post-qa|retrospective>`
+- `/shiploop-tester` — full QA pipeline
+- `/shiploop-observer` — check chain health, propose optimizations
+- `/shiploop-expert phase=<pre-ship|in-progress|blind-bug>` — consult the
+  `expert` subagent (`agents/expert.md`); loads cached capsule from
+  `.claude/expertise/<domain>.md` or researches fresh.
+- `/shiploop-skill-builder` — scaffold or audit a new skill.
+
+---
+
+## Project-specific rules
+
+<!-- Fill this section as rules emerge. Promote crystallized rules from
+     DEVLOG.md into STABLE_LOGIC.md over time. -->
+
+## Known issues / workarounds
+
+{{KNOWN_ISSUES}}

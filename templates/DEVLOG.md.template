@@ -1,0 +1,26 @@
+# DEVLOG — {{PROJECT_NAME}}
+
+One block per meaningful work session. Format:
+`Problem · Decision · Result · Lesson`. Newest at the top.
+
+Started: {{DATE}}
+Stack: {{STACK}}
+
+---
+
+## {{DATE}} · Project initialized
+
+**Problem.** New project; nothing shipped yet.
+
+**Decision.** ShipLoop v2.0 environment configured via
+`scripts/init-project.sh`. Skills, agents, templates, and empty
+`.claude/expertise/` installed under `.claude/`.
+
+**Result.** Repo is ready for first discovery session.
+
+**Lesson.** First DEVLOG entry sets the voice. Keep subsequent entries
+in the same `Problem · Decision · Result · Lesson` cadence — the
+measurement framework in `/tools` depends on it. "Next step:
+`/shiploop-brainstorm stage=discovery`."
+
+---

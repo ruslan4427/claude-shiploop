@@ -1,0 +1,66 @@
+# {{SPEC_TITLE}}
+
+**Date.** {{DATE}}
+**Author.** {{AUTHOR}}
+**Status.** draft | approved | implemented | retired
+
+---
+
+## 1. Problem
+
+What breaks or is missing today. One short paragraph — not a wall of
+context. The reader should understand *why this exists* in 60 seconds.
+
+## 2. Goal
+
+The outcome, as a single testable sentence. "Users can X" / "The parser
+produces Y" / "The scorecard surfaces Z." No implementation detail here.
+
+## 3. Non-goals
+
+What this spec explicitly does NOT do. Prevents scope creep in review.
+
+## 4. Design
+
+The chosen approach, with enough detail that `plan.md` (next doc) can
+decompose it into tasks without re-researching. Include:
+
+- **Shape of the solution** (data flow, module boundaries, UI surfaces).
+- **Key decisions** (one subsection per decision, with rationale).
+- **Rejected alternatives** (what you considered + why they lost).
+
+For UI work: wireframes or sketches here. For backend work: schema +
+API shape.
+
+## 5. Open questions
+
+Questions whose answers would change the design. Each gets an **Owner**
+(who's figuring it out) and a **Resolution** (filled in before the spec
+moves from `draft` → `approved`).
+
+| # | Question | Owner | Resolution |
+|---|----------|-------|------------|
+| 1 | …        | …     | …          |
+
+## 6. Risks
+
+Things that could go wrong under this design. Each gets a mitigation
+plan. Risks are explicit so reviewers can push back on them individually.
+
+## 7. Rollout
+
+Who deploys what, in what order, with what rollback. For solo work this
+is one bullet; for shared infra it may be a sequence of PRs.
+
+## 8. Metrics / verification
+
+How we know the spec achieved its goal post-ship. Specific numbers,
+dates, or user-visible behaviors — not "feels better."
+
+---
+
+## Appendix — references
+
+- Prior specs this one builds on.
+- External docs, RFCs, or vendor pages referenced in §4.
+- DEVLOG entries that led to this spec being written.

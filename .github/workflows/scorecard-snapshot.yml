@@ -1,0 +1,35 @@
+name: scorecard-snapshot
+
+on:
+  pull_request:
+    paths:
+      - "scripts/scorecard.mjs"
+      - "scripts/snapshot-check.mjs"
+      - "scripts/scorecard.config.mjs"
+      - "scripts/lib/**"
+      - "scripts/__fixtures__/**"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/scorecard.mjs"
+      - "scripts/snapshot-check.mjs"
+      - "scripts/scorecard.config.mjs"
+      - "scripts/lib/**"
+      - "scripts/__fixtures__/**"
+
+jobs:
+  shape-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The scorecard parser is pure Node — no deps to install.
+      - name: Shape-check parser output against fixture
+        run: node scripts/snapshot-check.mjs
+
+      - name: Config-version regression (fail if parser accepts v999)
+        run: node scripts/__fixtures__/scorecard.config.v999.smoke.mjs
