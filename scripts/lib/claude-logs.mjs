@@ -2,11 +2,13 @@
 //
 // Each assistant message carries a `message.usage` block with
 // `input_tokens`, `output_tokens`, `cache_read_input_tokens`,
-// `cache_creation_input_tokens`. Total per-session tokens = sum of all
-// four across all assistant messages.
+// `cache_creation_input_tokens`. Total per-session tokens =
+// `input_tokens + output_tokens + cache_creation_input_tokens`.
 //
-// Cache-read is included at face value (not discounted to 10% of input
-// cost) because this is a RAW TOKEN metric, not a cost derivation.
+// Cache reads are deliberately EXCLUDED: Anthropic prices them at
+// ~10% of input and they dominate raw volume on long sessions
+// (97%+ on dense days), inflating the metric without reflecting
+// what was actually billed. This counts what the author pays for.
 //
 // Model attribution is by `message.model`. Known model IDs normalize
 // to `opus` / `sonnet` / `haiku`; everything else lands in `other`.
@@ -61,10 +63,11 @@ function emptyUsage() {
 /** @param {Record<string, unknown>} usage */
 function sumUsage(usage) {
   const n = (v) => (typeof v === "number" ? v : 0);
+  // Metered tokens only — cache_read is 10% price and dominates raw
+  // volume. Excluded so the metric reflects what the author pays.
   return (
     n(usage.input_tokens) +
     n(usage.output_tokens) +
-    n(usage.cache_read_input_tokens) +
     n(usage.cache_creation_input_tokens)
   );
 }
