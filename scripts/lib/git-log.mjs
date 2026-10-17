@@ -55,6 +55,43 @@ export async function countCommits(repoPath) {
 }
 
 /**
+ * Count commits per author-local date. Uses `--date=short` which emits
+ * YYYY-MM-DD aligned with the Europe/Kyiv claude-logs bucketing.
+ *
+ * @param {string | null} repoPath
+ * @returns {Promise<Map<string, number> | null>}
+ */
+export async function commitsByDate(repoPath) {
+  if (!repoPath) return null;
+  try {
+    const s = await stat(join(repoPath, ".git"));
+    if (!s.isDirectory()) return null;
+  } catch {
+    return null;
+  }
+
+  let stdout;
+  try {
+    const r = await exec(
+      "git",
+      ["-C", repoPath, "log", "--format=%ad", "--date=short"],
+      { maxBuffer: 64 * 1024 * 1024 },
+    );
+    stdout = r.stdout;
+  } catch {
+    return null;
+  }
+
+  /** @type {Map<string, number>} */
+  const byDate = new Map();
+  for (const date of stdout.split("\n")) {
+    if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)) continue;
+    byDate.set(date, (byDate.get(date) ?? 0) + 1);
+  }
+  return byDate;
+}
+
+/**
  * @param {{fix: number, feat: number, conventional: number} | null} counts
  */
 export function reworkRatio(counts) {

@@ -10,11 +10,29 @@
 //
 // Model attribution is by `message.model`. Known model IDs normalize
 // to `opus` / `sonnet` / `haiku`; everything else lands in `other`.
+//
+// Daily bucketing uses Europe/Kyiv local date so it aligns with git log
+// `--date=short` output (which reflects committer local time). This is
+// author-local; cross-timezone contributors would need a different rule.
 
 import { createReadStream } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
+
+const KYIV_DATE_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Kyiv",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** @param {string} isoTimestamp */
+function localDate(isoTimestamp) {
+  const t = Date.parse(isoTimestamp);
+  if (!Number.isFinite(t)) return null;
+  return KYIV_DATE_FMT.format(new Date(t));
+}
 
 const MODEL_FAMILY = {
   "claude-opus-4-7": "opus",
@@ -52,11 +70,14 @@ function sumUsage(usage) {
 }
 
 /**
- * Stream-parse one `.jsonl` session, summing tokens per model family.
+ * Stream-parse one `.jsonl` session, summing tokens per model family + per
+ * local date.
  * @param {string} filePath
  */
 async function readOneSession(filePath) {
   const byModel = emptyUsage();
+  /** @type {Map<string, number>} */
+  const byDate = new Map();
   let firstTs = null;
   let lastTs = null;
 
@@ -84,11 +105,16 @@ async function readOneSession(filePath) {
     const usage = msg.usage;
     if (!usage || typeof usage !== "object") continue;
     const family = familyOf(msg.model);
-    byModel[family] += sumUsage(usage);
+    const n = sumUsage(usage);
+    byModel[family] += n;
+    if (ts && n > 0) {
+      const date = localDate(ts);
+      if (date) byDate.set(date, (byDate.get(date) ?? 0) + n);
+    }
   }
 
   const total = Object.values(byModel).reduce((a, b) => a + b, 0);
-  return { total, byModel, firstTs, lastTs };
+  return { total, byModel, byDate, firstTs, lastTs };
 }
 
 /**
@@ -115,10 +141,19 @@ export async function readSessionTokens(logDir) {
   }
 
   if (files.length === 0) {
-    return { total: 0, byModel: emptyUsage(), sessionCount: 0, firstTs: null, lastTs: null };
+    return {
+      total: 0,
+      byModel: emptyUsage(),
+      sessionCount: 0,
+      firstTs: null,
+      lastTs: null,
+      tokensByDate: new Map(),
+    };
   }
 
   const byModel = emptyUsage();
+  /** @type {Map<string, number>} */
+  const tokensByDate = new Map();
   let total = 0;
   let firstTs = null;
   let lastTs = null;
@@ -128,6 +163,9 @@ export async function readSessionTokens(logDir) {
     total += r.total;
     for (const k of Object.keys(byModel)) {
       byModel[k] += r.byModel[k];
+    }
+    for (const [date, n] of r.byDate) {
+      tokensByDate.set(date, (tokensByDate.get(date) ?? 0) + n);
     }
     if (r.firstTs && (!firstTs || r.firstTs < firstTs)) firstTs = r.firstTs;
     if (r.lastTs && (!lastTs || r.lastTs > lastTs)) lastTs = r.lastTs;
@@ -139,5 +177,6 @@ export async function readSessionTokens(logDir) {
     sessionCount: files.length,
     firstTs,
     lastTs,
+    tokensByDate,
   };
 }

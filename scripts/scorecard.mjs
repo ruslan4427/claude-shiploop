@@ -22,7 +22,7 @@ import { readSessionTokens } from "./lib/claude-logs.mjs";
 // guard works: bumping configVersion requires editing this constant in a
 // separate file, which the diff makes obvious at review time.
 const REQUIRED_CONFIG_VERSION = 1;
-import { countCommits, reworkRatio } from "./lib/git-log.mjs";
+import { countCommits, commitsByDate, reworkRatio } from "./lib/git-log.mjs";
 import { scanDevlog, expertHitRate } from "./lib/devlog.mjs";
 import { disciplineScore, medianTimeToShip } from "./lib/metrics.mjs";
 
@@ -56,6 +56,27 @@ function modelMixFromMeasured(byModel) {
   return mix;
 }
 
+/**
+ * Zip token-by-date map with commit-by-date map into a sorted daily array.
+ * Returns null when both inputs are empty/missing (no signal at all).
+ *
+ * @param {Map<string, number> | null | undefined} tokensByDate
+ * @param {Map<string, number> | null | undefined} commitsByDateMap
+ */
+function buildDaily(tokensByDate, commitsByDateMap) {
+  const dates = new Set();
+  if (tokensByDate) for (const d of tokensByDate.keys()) dates.add(d);
+  if (commitsByDateMap) for (const d of commitsByDateMap.keys()) dates.add(d);
+  if (dates.size === 0) return null;
+  return [...dates]
+    .sort()
+    .map((date) => ({
+      date,
+      tokens: tokensByDate?.get(date) ?? 0,
+      commits: commitsByDateMap?.get(date) ?? 0,
+    }));
+}
+
 /** @param {string | null} firstTs @param {string | null} lastTs */
 function durationFromTimestamps(firstTs, lastTs) {
   if (!firstTs || !lastTs) return null;
@@ -68,12 +89,13 @@ function durationFromTimestamps(firstTs, lastTs) {
 
 /** @param {typeof SCORECARD_CONFIG.projects[number]} project */
 async function scoreProject(project) {
-  const [tokens, commits, devlog, discipline, tts] = await Promise.all([
+  const [tokens, commits, devlog, discipline, tts, commitsByDay] = await Promise.all([
     readSessionTokens(project.logPath),
     countCommits(project.repoPath),
     scanDevlog(project.repoPath),
     disciplineScore(project.repoPath),
     medianTimeToShip(project.repoPath),
+    commitsByDate(project.repoPath),
   ]);
 
   const measuredMix = tokens ? modelMixFromMeasured(tokens.byModel) : null;
@@ -82,6 +104,8 @@ async function scoreProject(project) {
   const tokenSource = project.logPath === null
     ? "unmeasurable"
     : (tokens && tokens.total > 0 ? "dedicated-session-log" : "empty-session-log");
+
+  const daily = buildDaily(tokens?.tokensByDate, commitsByDay);
 
   return {
     slug: project.slug,
@@ -102,6 +126,7 @@ async function scoreProject(project) {
       tier: project.tier,
       tokenSource,
     },
+    daily,
     details: {
       disciplineCriteria: discipline ? discipline.criteria : null,
       commitCounts: commits,
